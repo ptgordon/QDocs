@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+                                             <?xml-stylesheet type='text/xsl' href='Summary.xslt'?><SUMMARY>
+  <DeviceInformation>
+    <DeviceName>ATxmega384C3</DeviceName>
+    <DeviceVariant>64</DeviceVariant>
+    <Technology>Self Capacitance</Technology>
+  </DeviceInformation>
+  <SensorInformation TotalSensors="8">
+    <NumberOfButtons>8</NumberOfButtons>
+    <NumberOfWheels>0</NumberOfWheels>
+    <NumberOfSliders>0</NumberOfSliders>
+  </SensorInformation>
+  <ChannelInformation>
+    <TotalChannelsConsumed>8</TotalChannelsConsumed>
+  </ChannelInformation>
+  <PinConfiguration>
+    <AvailablePorts>A,B,C,D,E,F</AvailablePorts>
+    <TotalPinsUsed>16</TotalPinsUsed>
+    <Sensors>
+      <Sensor Name="Button0" ChannelNumber="0" SNS="PA0" SNSK="PA1" />
+      <Sensor Name="Button1" ChannelNumber="1" SNS="PA2" SNSK="PA3" />
+      <Sensor Name="Button2" ChannelNumber="2" SNS="PA4" SNSK="PA5" />
+      <Sensor Name="Button3" ChannelNumber="3" SNS="PA6" SNSK="PA7" />
+      <Sensor Name="Button4" ChannelNumber="4" SNS="PB0" SNSK="PB1" />
+      <Sensor Name="Button5" ChannelNumber="5" SNS="PB2" SNSK="PB3" />
+      <Sensor Name="Button6" ChannelNumber="6" SNS="PB4" SNSK="PB5" />
+      <Sensor Name="Button7" ChannelNumber="7" SNS="PB6" SNSK="PB7" />
+    </Sensors>
+  </PinConfiguration>
+  <LibraryInformation ToolChainName="GCC">
+    <DefaultLibrary>libavrxmega6g1-8qt-k-0rs.a</DefaultLibrary>
+  </LibraryInformation>
+  <MemoryInformation>
+    <DataMemory>
+      <TotalDataMemory>32768</TotalDataMemory>
+      <DataMemoryUsed>124</DataMemoryUsed>
+      <DataMemoryFree>32644</DataMemoryFree>
+    </DataMemory>
+    <CodeMemory>
+      <TotalCodeMemory>401408</TotalCodeMemory>
+      <CodeMemoryUsed>2750</CodeMemoryUsed>
+      <CodeMemoryFree>398658</CodeMemoryFree>
+    </CodeMemory>
+  </MemoryInformation>
+  <OtherOptions>
+    <DelayCycle>10</DelayCycle>
+    <PowerOptimization>Disable</PowerOptimization>
+  </OtherOptions>
+  <ComponentID>qtlib.generic.tmx.qt.avrxmega</ComponentID>
+</SUMMARY>
