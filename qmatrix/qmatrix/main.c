@@ -3,7 +3,7 @@
  *
  * Created: 8/25/2016 1:24:47 PM
  * Author : patto
- */ 
+ */
 
 #define F_CPU 2000000
 
@@ -63,52 +63,55 @@ uint8_t eight_bit_crc(uint8_t crc, uint8_t data){  //calculates CRCs
 		fb = (crc ^ data) & 0x01;
 		data >>= 1;
 		crc >>= 1;
-			
+
 		if(fb){
 			crc ^= 0x8c;
 		}
-	}while (--index); 
-	
+	}while (--index);
+
 	return crc;
 }
 
-uint8_t * setupsblockpopulate() {  //values according to "standard settings" in qmatrix datasheet
-	
+uint8_t * setupsblockpopulate() {  //J refers to byte. see QT60248 datasheet for more detailled discriptions.
+
 	static uint8_t setups[100];
 	int j;
 
-	for (j=0; j<16; j++){
+/*
+Lower nibble = Negative threshold (0..15)
+Upper nibble = Negative Drift Compensation (0..15)
+*/
+	for (j=0; j<16; j++){ //keys 0-15
 		setups[j] = 0xaa;
 	}
-	
-	for (j=16; j<24; j++){
+	for (j=16; j<24; j++){  //keys 16-23
 		setups[j] = 0xa3;
 	}
-	
-	for (j=24; j<28; j++){
+
+/*
+Lower nibble = Normal Detect Integration Limit (0..15) 0 disables key
+Upper nibble = Fast Detect Integration Limit (0..15) 0 does not work
+*/
+	for (j=24; j<28; j++){ //keys 0-3
 		setups[j] = 0x52;
 	}
-	
-	for (j=28; j<32; j++){
+	for (j=28; j<32; j++){ //keys 4-7
 		setups[j] = 0x50;
 	}
-	
-	for (j=32; j<37; j++){
+	for (j=32; j<37; j++){ //keys 8-12
 		setups[j] = 0x52;
 	}
-	
-	for (j=37; j<40; j++){
+	for (j=37; j<40; j++){ //keys 13-15
 		setups[j] = 0x50;
 	}
-	
-	for (j=40; j<43; j++){
+	for (j=40; j<43; j++){ //keys 16-18
 		setups[j] = 0x50;
 	}
-	
+
 	for (j=43; j<48; j++){
 		setups[j] = 0x50;
 	}
-	
+
 	for (j=48; j<72; j++){
 		setups[j] = 0x00;
 	}
@@ -118,7 +121,7 @@ uint8_t * setupsblockpopulate() {  //values according to "standard settings" in 
 	}
 	j = 96;
 	setups[j] = 0x00;
-	
+
 	j=97;
 	setups[j] = 0x02;
 
@@ -136,15 +139,15 @@ ISR(SPIC_INT_vect)	// ISR called when SPI finishes with transmitting byte in SPI
 	cli();
 
 	// if you care about incoming data copy SPIC.DATA into your RX buffER
-	PORTC.OUT |= 0x10;
-	X = SPIC.DATA;
+	PORTC.OUT |= 0x10; //bit4 is /SS and must idle high
+	X = SPIC.DATA;  //writes received data to X
 	sei();
 }
 
 void DRDYCHECK(void)   // this pin must be high in order for IC to accept commands
 {
 	drty=PORTC.IN;
-	while((drty & 0x08)!= 0x08)
+	while((drty & 0x08)!= 0x08) //if bit3 of portc is low, the ic is not yet ready to receive commands
 	{
 		_delay_us(10);
 		drty=PORTC.IN;
@@ -153,21 +156,21 @@ void DRDYCHECK(void)   // this pin must be high in order for IC to accept comman
 
 void COMMAND(uint8_t command)  //general command format
 {
-	DRDYCHECK();
-	PORTC.OUT &= 0xEF;
+	DRDYCHECK();  //before issuing a command, the mcu must check to see if the ic is ready for a command using this function
+	PORTC.OUT &= 0xEF; //clears bit4 of Port C
 	SPIC.DATA = command;
-	_delay_us(40);
+	_delay_us(40); //40us must be allowed after command is given to avoid timing conflicts
 }
 
 void LAST_COMMAND(void)  //always done after restart or comms error
 {
 	if(loop_process == initialize){
-		while (X != 0xF0)
+		while (X != 0xF0)  //expected return last command. must receive this to move on
 		{
-			COMMAND(0x0F);
+			COMMAND(last_command);
 		}
-		COMMAND(eeprom_crc);
-		COMMAND(null_command);
+		COMMAND(eeprom_crc); //this command determines based on a checkbyte if the setups mode must be entered. It is far more efficient not to enter setups if it can be avoided
+		COMMAND(null_command);  //typically commands are followed by a null_command to give the ic a cycle to respond
 		temp = X;
 		if((temp != setupcrccheck) && (crccheckflag == 0x01)){
 			loop_process = error_handle;
@@ -221,7 +224,7 @@ void KEY_CHECK(void)
 		else{
 			loop_process = key_report;
 		}
-		
+
 	}
 }
 
@@ -233,7 +236,7 @@ void DETECT_REPORT(void)
 			Y = 1 << key_location;
 			Y0 = Y;
 			Y1 = Y>>8;
-			Y2 = Y>>16; 
+			Y2 = Y>>16;
 			PORTA.OUT = Y0;
 			PORTF.OUT = Y1;
 			PORTD.OUT = Y2;
@@ -355,7 +358,7 @@ void ERROR(void)
 
 int main(void)
 {
-	setupsblock = setupsblockpopulate();
+	setupsblock = setupsblockpopulate();  //first the setupsblock needs to be initialized. This contains all of the info about how the IC functions.
 	for(i=0; i<100; i++){
 		crcout = eight_bit_crc(setupcrccheck, *(setupsblock + i));
 		setupcrccheck = crcout;
