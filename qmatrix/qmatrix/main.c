@@ -107,10 +107,10 @@ Upper nibble = Fast Detect Integration Limit (0..15) 0 does not work
 	for (j=40; j<43; j++){ //keys 16-18
 		setups[j] = 0x50;
 	}
-
-	for (j=43; j<48; j++){
+	for (j=43; j<48; j++){ //keys 19-23
 		setups[j] = 0x50;
 	}
+
 
 	for (j=48; j<72; j++){
 		setups[j] = 0x00;
