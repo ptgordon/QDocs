@@ -111,20 +111,40 @@ Upper nibble = Fast Detect Integration Limit (0..15) 0 does not work
 		setups[j] = 0x50;
 	}
 
-
+/*
+Negative Recalibration delay (0..254) 255 is illegal to use.
+0.5 sec increments.
+0 is infinity.
+*/
 	for (j=48; j<72; j++){
 		setups[j] = 0x00;
 	}
 
+/*
+Bits 5,4 Burst Length.
+Bit 6 Adjacent Key Supression 1=enabled
+Bit 7 Scope sycnc. 1=enabled
+*/
 	for (j=72; j<96; j++){
 		setups[j] = 0x00;
 	}
+
+/*
+Mains sync on bit 6
+*/
 	j = 96;
 	setups[j] = 0x00;
 
+/*
+Burst spacing Lower nibble
+*/
 	j=97;
 	setups[j] = 0x02;
 
+/*
+Lower Signal Limit (0..2048)
+j=98 represents lsb
+*/
 	j=98;
 	setups[j] = 0x54;
 
@@ -201,21 +221,26 @@ void LOAD_SETUPS_BLOCK(void)  //see datasheet for values.  setups block configur
 void KEY_CHECK(void)
 {
 	if(loop_process == key_detect){
-		PORTB.OUT = 0X02;
-		COMMAND(report_first_key);
-		COMMAND(null_command);
-		temp = X;
-		COMMAND(null_command);
+		PORTB.OUT = 0X02; //Status LED
+		COMMAND(report_first_key);  //requests key report
+		COMMAND(null_command);  //accepts response
+		temp = X;  //stores response
+		COMMAND(null_command);  //accepts crc from ic
+
+/*
+crc calculation includes the command and the response
+*/
 		crcout = eight_bit_crc(0x00, report_first_key);
 		crccheck = crcout;
 		crcout = eight_bit_crc(crccheck, temp);
-		if(crcout != X){
+
+		if(crcout != X){  //actual checksum does not match calculated checksum
 			loop_process = error_handle;
 		}
-		else if((temp & 0x40) == 0x40){
+		else if((temp & 0x40) == 0x40){ //error condition present
 			loop_process = get_status;
 		}
-		else if((temp & 0x9F) == 0x1F){
+		else if((temp & 0x9F) == 0x1F){ //no key in detect
 			PORTA.OUT = 0x00;
 			PORTD.OUT = 0x00;
 			PORTF.OUT = 0x00;
@@ -231,7 +256,7 @@ void KEY_CHECK(void)
 void DETECT_REPORT(void)
 {
 	if(loop_process == key_report){
-		if((temp & 0x80) != 0x80){
+		if((temp & 0x80) != 0x80){  // only one key in detect
 			key_location = temp & 0x1F;
 			Y = 1 << key_location;
 			Y0 = Y;
@@ -362,24 +387,24 @@ int main(void)
 	for(i=0; i<100; i++){
 		crcout = eight_bit_crc(setupcrccheck, *(setupsblock + i));
 		setupcrccheck = crcout;
-	}
+	} //this calculates what the CRC should be based on setups block inputs.
 	PORTA.DIR = 0xFF;
 	PORTB.DIR = 0xFF;
 	PORTD.DIR = 0xFF;
 	PORTF.DIR = 0xFF;
-	PORTC.DIR = 0xB4;
-	PORTC.OUT |= 0x14;
-	SPIC0();
+	PORTC.DIR = 0xB4;  //required I/O config for SPI
+	PORTC.OUT |= 0x14; // bit4 represents /SS. bit2 represents /reset.
+	SPIC0(); //initialize and configure SPIC
 	PMIC.CTRL |= PMIC_HILVLEN_bm;
 	sei();
 	X = 0;
 	crccheckflag = 0;
-	loop_process = initialize;
+	loop_process = initialize; // loop_process determines which function to execute in subsequent while loop
 	while(1){
-		LAST_COMMAND();
-		KEY_CHECK();
-		DETECT_REPORT();
-		STATUS_CHECK();
-		ERROR();
+		LAST_COMMAND(); //if loop_process = initialize.
+		KEY_CHECK(); //if loop_process = key_detect.
+		DETECT_REPORT(); //if loop_process = key_report.
+		STATUS_CHECK(); //if loop_process = get_status.
+		ERROR(); //if loop_process = error_handle.
 	}
 }
